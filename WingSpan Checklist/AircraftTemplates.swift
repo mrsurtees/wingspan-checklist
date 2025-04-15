@@ -1,7 +1,8 @@
 // AircraftTemplates.swift
 import Foundation
 import SwiftUI
-
+////
+///
 
 // Default aircraft data and checklist sections
 struct AircraftTemplates {
