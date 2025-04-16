@@ -347,3 +347,4 @@ struct SimplifiedItemView: View {
         }
     }
 }
+ 

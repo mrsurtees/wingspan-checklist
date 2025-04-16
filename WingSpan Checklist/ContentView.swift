@@ -41,7 +41,7 @@ struct WingSpanChecklistApp: App {
         }
     }
 }
-
+ 
 // View Models
 enum AircraftSortOption {
     case modelName

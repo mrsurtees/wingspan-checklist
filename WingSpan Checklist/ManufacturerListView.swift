@@ -294,3 +294,4 @@ struct StatusCircle: View {
         return Color(hex: "4a90e2")
     }
 }
+ 

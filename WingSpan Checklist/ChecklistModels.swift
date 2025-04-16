@@ -10,7 +10,7 @@ struct WingSpanAircraft: Identifiable, Codable, Equatable, Hashable {
         lhs.id == rhs.id && lhs.modelName == rhs.modelName
     }
 }
-
+ 
 enum ChecklistItemStatus: String, Codable {
     case notCompleted
     case completed

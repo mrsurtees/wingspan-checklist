@@ -3,7 +3,7 @@
 // Defines the AboutView struct, which displays the app's about page with a sunset background and app information.
 import SwiftUI
 import Foundation
-
+ 
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
 
