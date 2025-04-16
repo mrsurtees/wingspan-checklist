@@ -153,12 +153,19 @@ struct SimplifiedSectionView: View {
     private var sectionStatusColor: Color {
         let hasFailedItems = section.items.contains { $0.status == .failed }
         let allCompleted = section.items.allSatisfy { $0.status == .completed }
+        let noneCompleted = section.items.allSatisfy { $0.status == .notCompleted }
 
         if hasFailedItems {
+            // Using brighter red color
             return .red
         } else if allCompleted {
+            // Using brighter green color
             return .green
+        } else if noneCompleted {
+            // Using blue color for untouched sections
+            return Color(hex: "4a90e2")
         } else {
+            // Using brighter yellow color
             return .yellow
         }
     }
@@ -182,9 +189,10 @@ struct SimplifiedSectionView: View {
                 }
             }) {
                 HStack {
+                    // Made the circle slightly larger and removed any opacity modifiers
                     Circle()
                         .fill(sectionStatusColor)
-                        .frame(width: 12, height: 12)
+                        .frame(width: 14, height: 14)
 
                     Text(section.title)
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
@@ -274,9 +282,11 @@ struct SimplifiedItemView: View {
                         viewModel.saveChecklist()
                     }) {
                         ZStack {
-                            Circle().stroke(Color.gray.opacity(0.5), lineWidth: 1.5).frame(width: 28, height: 28)
+                            // Changed color from gray to blue and increased line width
+                            Circle().stroke(Color(hex: "4a90e2"), lineWidth: 2.0).frame(width: 28, height: 28)
                             if item.status == .notCompleted {
-                                Circle().fill(Color.gray).frame(width: 20, height: 20)
+                                // Changed fill from gray to blue
+                                Circle().fill(Color(hex: "4a90e2")).frame(width: 20, height: 20)
                             }
                         }
                     }
@@ -288,10 +298,12 @@ struct SimplifiedItemView: View {
                         viewModel.saveChecklist()
                     }) {
                         ZStack {
-                            Circle().stroke(Color.green.opacity(0.5), lineWidth: 1.5).frame(width: 28, height: 28)
+                            // Removed opacity modifier and increased line width
+                            Circle().stroke(Color.green, lineWidth: 2.0).frame(width: 28, height: 28)
                             if item.status == .completed {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 12, weight: .bold))
+                                    // Full brightness green
                                     .foregroundColor(.green)
                             }
                         }
@@ -304,10 +316,12 @@ struct SimplifiedItemView: View {
                         viewModel.saveChecklist()
                     }) {
                         ZStack {
-                            Circle().stroke(Color.red.opacity(0.5), lineWidth: 1.5).frame(width: 28, height: 28)
+                            // Removed opacity modifier and increased line width
+                            Circle().stroke(Color.red, lineWidth: 2.0).frame(width: 28, height: 28)
                             if item.status == .failed {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 12, weight: .bold))
+                                    // Full brightness red
                                     .foregroundColor(.red)
                             }
                         }
