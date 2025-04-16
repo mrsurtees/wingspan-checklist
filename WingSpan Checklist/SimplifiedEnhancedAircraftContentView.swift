@@ -98,17 +98,7 @@ struct SimplifiedEnhancedAircraftContentView: View {
         }
         .navigationTitle(aircraft.modelName)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
-                    viewModel.saveChecklist()
-                    presentationMode.wrappedValue.dismiss()
-                }
-            }
-        }
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color(hex: "1b3b6f"), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+
         .alert(isPresented: $showResetAlert) {
             Alert(
                 title: Text("Reset Checklist"),
