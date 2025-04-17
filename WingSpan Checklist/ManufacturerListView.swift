@@ -1,11 +1,83 @@
 import SwiftUI
 import Foundation
 
+struct WelcomeBanner: View {
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(hex: "2c4a80"))
+                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
+                
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Welcome to WingSpan 🛩️")
+                            .font(.system(size: geometry.size.width < 350 ? 20 : 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Text("Select a manufacturer to begin.")
+                            .font(.system(size: geometry.size.width < 350 ? 13 : 15, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 15)
+                .padding(.vertical, 15)
+            }
+        }
+        .frame(height: 100) // Fixed height but responsive width
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
+    }
+}
+
+struct SearchBar: View {
+    @Binding var searchText: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.leading, 8)
+            
+            TextField("Search manufacturers or aircraft", text: $searchText)
+                .foregroundColor(.white)
+                .padding(10)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+            
+            if !searchText.isEmpty {
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.trailing, 8)
+                }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(hex: "102040").opacity(0.7))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 10)
+    }
+}
+
 struct ManufacturerListView: View {
     @StateObject private var viewModel = AircraftViewModel()
     @State private var selectedAircraft: WingSpanAircraft? = nil
     @State private var hasLaunched = false
     @State private var showResetAlert = false
+    @State private var searchText: String = ""
     private let themeBlue = Color(hex: "1b3b6f")
 
     var body: some View {
@@ -15,8 +87,16 @@ struct ManufacturerListView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     header
-
-                    ManufacturerListBlock(viewModel: viewModel)
+                    
+                    WelcomeBanner()
+                    
+                    SearchBar(searchText: $searchText)
+                    
+                    if searchText.isEmpty {
+                        ManufacturerListBlock(viewModel: viewModel)
+                    } else {
+                        SearchResultsView(searchText: searchText, viewModel: viewModel, selectedAircraft: $selectedAircraft)
+                    }
 
                     ResetAllButton {
                         showResetAlert = true
@@ -60,10 +140,6 @@ struct ManufacturerListView: View {
 
     private var header: some View {
         HStack {
-            Text("Manufacturers")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-            
             Spacer()
             
             NavigationLink(destination: AboutView()) {
@@ -103,6 +179,88 @@ struct ManufacturerListView: View {
             checklistVM.saveChecklist()
         }
         print("✅ Reset complete for all \(viewModel.aircraft.count) aircraft")
+    }
+}
+
+struct SearchResultsView: View {
+    let searchText: String
+    let viewModel: AircraftViewModel
+    @Binding var selectedAircraft: WingSpanAircraft?
+    
+    var filteredAircraft: [WingSpanAircraft] {
+        let query = searchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return viewModel.aircraft.filter { aircraft in
+            aircraft.modelName.lowercased().contains(query) ||
+            aircraft.manufacturer.lowercased().contains(query)
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(hex: "102040").opacity(0.3))
+                .frame(height: 500)
+                .padding(.horizontal, 16)
+            
+            if filteredAircraft.isEmpty {
+                VStack {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.4))
+                        .padding(.bottom, 10)
+                    
+                    Text("No results found")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(filteredAircraft) { aircraft in
+                            Button {
+                                selectedAircraft = aircraft
+                            } label: {
+                                HStack(spacing: 12) {
+                                    StatusCircle(aircraftId: aircraft.id)
+                                        .padding(.trailing, 10)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(aircraft.modelName)
+                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                            .foregroundColor(.white)
+                                        
+                                        Text(aircraft.manufacturer)
+                                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                                            .foregroundColor(.white.opacity(0.6))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "airplane")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .rotationEffect(.degrees(-45))
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color(hex: "102040").opacity(0.6))
+                                )
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                    }
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                }
+                .padding(.vertical, 2)
+            }
+        }
     }
 }
 
