@@ -1,39 +1,8 @@
+// ManufacturerListView.swift
 import SwiftUI
 import Foundation
 
-struct WelcomeBanner: View {
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(hex: "2c4a80"))
-                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
-                
-                HStack(alignment: .center, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Welcome to WingSpan 🛩️")
-                            .font(.system(size: geometry.size.width < 350 ? 20 : 24, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                        
-                        Text("Select a manufacturer to begin.")
-                            .font(.system(size: geometry.size.width < 350 ? 13 : 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.9))
-                            .lineLimit(1)
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 15)
-                .padding(.vertical, 15)
-            }
-        }
-        .frame(height: 100) // Fixed height but responsive width
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 10)
-    }
-}
-
+// 1. SearchBar
 struct SearchBar: View {
     @Binding var searchText: String
     
@@ -72,116 +41,105 @@ struct SearchBar: View {
     }
 }
 
-struct ManufacturerListView: View {
-    @StateObject private var viewModel = AircraftViewModel()
-    @State private var selectedAircraft: WingSpanAircraft? = nil
-    @State private var hasLaunched = false
-    @State private var showResetAlert = false
-    @State private var searchText: String = ""
-    private let themeBlue = Color(hex: "1b3b6f")
-
+// 2. WelcomeBanner
+struct WelcomeBanner: View {
     var body: some View {
-        NavigationStack {
+        GeometryReader { geometry in
             ZStack {
-                themeBlue.ignoresSafeArea()
-
-                VStack(alignment: .leading, spacing: 0) {
-                    header
-                    
-                    WelcomeBanner()
-                    
-                    SearchBar(searchText: $searchText)
-                    
-                    if searchText.isEmpty {
-                        ManufacturerListBlock(viewModel: viewModel)
-                    } else {
-                        SearchResultsView(searchText: searchText, viewModel: viewModel, selectedAircraft: $selectedAircraft)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(hex: "2c4a80"))
+                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 3)
+                
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Welcome to WingSpan 🛩️")
+                            .font(.system(size: geometry.size.width < 350 ? 20 : 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Text("Select a manufacturer to begin.")
+                            .font(.system(size: geometry.size.width < 350 ? 13 : 15, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(1)
                     }
-
-                    ResetAllButton {
-                        showResetAlert = true
-                    }
+                    
+                    Spacer()
                 }
-
-                NavigationLink(value: selectedAircraft) {
-                    EmptyView()
-                }
-                .opacity(0)
-            }
-            .navigationBarHidden(true)
-            .onAppear {
-                if !hasLaunched {
-                    hasLaunched = true
-                    if let aircraft = loadLastViewedAircraft() {
-                        selectedAircraft = aircraft
-                    }
-                }
-            }
-            .navigationDestination(for: String.self) { manufacturer in
-                FilteredAircraftListView(manufacturer: manufacturer)
-            }
-            .navigationDestination(for: WingSpanAircraft.self) { aircraft in
-                SimplifiedEnhancedAircraftContentView(aircraft: aircraft)
-                    .environmentObject(ChecklistViewModel.forAircraft(id: aircraft.id))
-            }
-            .alert(isPresented: $showResetAlert) {
-                Alert(
-                    title: Text("Reset All Checklists"),
-                    message: Text("Are you sure you want to reset all checklists for every aircraft in the app? This cannot be undone."),
-                    primaryButton: .destructive(Text("Reset All")) {
-                        resetAllChecklists()
-                    },
-                    secondaryButton: .cancel()
-                )
+                .padding(.horizontal, 15)
+                .padding(.vertical, 15)
             }
         }
-        .preferredColorScheme(.dark)
-    }
-
-    private var header: some View {
-        HStack {
-            Spacer()
-            
-            NavigationLink(destination: AboutView()) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Circle().fill(Color(hex: "2c4a80")))
-            }
-        }
+        .frame(height: 100) // Fixed height but responsive width
         .padding(.horizontal, 16)
-        .padding(.top, 24)
-    }
-
-    private func loadLastViewedAircraft() -> WingSpanAircraft? {
-        let url = savedAircraftURL()
-        guard let data = try? Data(contentsOf: url),
-              let saved = try? JSONDecoder().decode(WingSpanAircraft.self, from: data)
-        else {
-            print("⚠️ Failed to load last viewed aircraft")
-            return nil
-        }
-        print("✅ Loaded last viewed aircraft: \(saved.modelName)")
-        return saved
-    }
-
-    private func savedAircraftURL() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("lastAircraft.json")
-    }
-
-    private func resetAllChecklists() {
-        print("Resetting all checklists in the app")
-        for aircraft in viewModel.aircraft {
-            let checklistVM = ChecklistViewModel.forAircraft(id: aircraft.id)
-            checklistVM.resetChecklist()
-            checklistVM.saveChecklist()
-        }
-        print("✅ Reset complete for all \(viewModel.aircraft.count) aircraft")
+        .padding(.top, 8)
+        .padding(.bottom, 10)
     }
 }
 
+// 3. ResetAllButton
+struct ResetAllButton: View {
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: "arrow.counterclockwise")
+                    .font(.system(size: 14))
+                Text("Reset All Checklists")
+                    .font(.system(size: 16, weight: .semibold))
+                    .lineLimit(1)
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .background(Color(hex: "d9534f"))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .padding(.top, 20)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
+// 4. StatusCircle
+struct StatusCircle: View {
+    let aircraftId: UUID
+    @ObservedObject private var checklistVM: ChecklistViewModel
+
+    init(aircraftId: UUID) {
+        self.aircraftId = aircraftId
+        self.checklistVM = ChecklistViewModel.forAircraft(id: aircraftId)
+    }
+
+    var body: some View {
+        Circle()
+            .fill(statusColor)
+            .frame(width: 14, height: 14)
+            .onAppear {
+                checklistVM.loadChecklist()
+            }
+    }
+
+    private var statusColor: Color {
+        let allItems = checklistVM.sections.flatMap { $0.items }
+
+        if allItems.contains(where: { $0.status == .failed }) {
+            return .red
+        }
+
+        let allCompleted = !allItems.isEmpty && allItems.allSatisfy { $0.status == .completed }
+        if allCompleted {
+            return .green
+        }
+
+        let hasCompleted = allItems.contains(where: { $0.status == .completed })
+        if hasCompleted {
+            return .yellow
+        }
+
+        return Color(hex: "4a90e2")
+    }
+}
+
+// 5. SearchResultsView
 struct SearchResultsView: View {
     let searchText: String
     let viewModel: AircraftViewModel
@@ -264,6 +222,7 @@ struct SearchResultsView: View {
     }
 }
 
+// 6. ManufacturerListBlock
 struct ManufacturerListBlock: View {
     let viewModel: AircraftViewModel
 
@@ -305,30 +264,7 @@ struct ManufacturerListBlock: View {
     }
 }
 
-struct ResetAllButton: View {
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: "arrow.counterclockwise")
-                    .font(.system(size: 14))
-                Text("Reset All Checklists")
-                    .font(.system(size: 16, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 20)
-            .background(Color(hex: "d9534f"))
-            .foregroundColor(.white)
-            .cornerRadius(10)
-        }
-        .padding(.top, 20)
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-}
-
-// MARK: Included Inline for Compiler Visibility
+// 7. FilteredAircraftListView
 struct FilteredAircraftListView: View {
     let manufacturer: String
     @StateObject private var viewModel = AircraftViewModel()
@@ -425,42 +361,130 @@ struct FilteredAircraftListView: View {
     }
 }
 
-// MARK: - StatusCircle
-struct StatusCircle: View {
-    let aircraftId: UUID
-    @ObservedObject private var checklistVM: ChecklistViewModel
-
-    init(aircraftId: UUID) {
-        self.aircraftId = aircraftId
-        self.checklistVM = ChecklistViewModel.forAircraft(id: aircraftId)
-    }
+// 8. FINALLY, ManufacturerListView
+struct ManufacturerListView: View {
+    @StateObject private var viewModel = AircraftViewModel()
+    @State private var selectedAircraft: WingSpanAircraft? = nil
+    @State private var hasLaunched = false
+    @State private var showResetAlert = false
+    @State private var showSettings = false
+    @State private var searchText: String = ""
+    private let themeBlue = Color(hex: "1b3b6f")
 
     var body: some View {
-        Circle()
-            .fill(statusColor)
-            .frame(width: 14, height: 14)
-            .onAppear {
-                checklistVM.loadChecklist()
+        NavigationStack {
+            ZStack {
+                themeBlue.ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    
+                    WelcomeBanner()
+                    
+                    SearchBar(searchText: $searchText)
+                    
+                    if searchText.isEmpty {
+                        ManufacturerListBlock(viewModel: viewModel)
+                    } else {
+                        SearchResultsView(searchText: searchText, viewModel: viewModel, selectedAircraft: $selectedAircraft)
+                    }
+
+                    ResetAllButton {
+                        showResetAlert = true
+                    }
+                }
+
+                NavigationLink(value: selectedAircraft) {
+                    EmptyView()
+                }
+                .opacity(0)
             }
+            .navigationBarHidden(true)
+            .onAppear {
+                if !hasLaunched {
+                    hasLaunched = true
+                    if let aircraft = loadLastViewedAircraft() {
+                        selectedAircraft = aircraft
+                    }
+                }
+            }
+            .navigationDestination(for: String.self) { manufacturer in
+                FilteredAircraftListView(manufacturer: manufacturer)
+            }
+            .navigationDestination(for: WingSpanAircraft.self) { aircraft in
+                SimplifiedEnhancedAircraftContentView(aircraft: aircraft)
+                    .environmentObject(ChecklistViewModel.forAircraft(id: aircraft.id))
+            }
+            .alert(isPresented: $showResetAlert) {
+                Alert(
+                    title: Text("Reset All Checklists"),
+                    message: Text("Are you sure you want to reset all checklists for every aircraft in the app? This cannot be undone."),
+                    primaryButton: .destructive(Text("Reset All")) {
+                        resetAllChecklists()
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 
-    private var statusColor: Color {
-        let allItems = checklistVM.sections.flatMap { $0.items }
-
-        if allItems.contains(where: { $0.status == .failed }) {
-            return .red
+    private var header: some View {
+        HStack {
+            Spacer()
+            
+            // Settings button
+            Button(action: {
+                showSettings = true
+            }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Circle().fill(Color(hex: "2c4a80")))
+            }
+            .padding(.trailing, 8)
+            
+            // About button
+            NavigationLink(destination: AboutView()) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Circle().fill(Color(hex: "2c4a80")))
+            }
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
+    }
 
-        let allCompleted = !allItems.isEmpty && allItems.allSatisfy { $0.status == .completed }
-        if allCompleted {
-            return .green
+    private func loadLastViewedAircraft() -> WingSpanAircraft? {
+        let url = savedAircraftURL()
+        guard let data = try? Data(contentsOf: url),
+              let saved = try? JSONDecoder().decode(WingSpanAircraft.self, from: data)
+        else {
+            print("⚠️ Failed to load last viewed aircraft")
+            return nil
         }
+        print("✅ Loaded last viewed aircraft: \(saved.modelName)")
+        return saved
+    }
 
-        let hasCompleted = allItems.contains(where: { $0.status == .completed })
-        if hasCompleted {
-            return .yellow
+    private func savedAircraftURL() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("lastAircraft.json")
+    }
+
+    private func resetAllChecklists() {
+        print("Resetting all checklists in the app")
+        for aircraft in viewModel.aircraft {
+            let checklistVM = ChecklistViewModel.forAircraft(id: aircraft.id)
+            checklistVM.resetChecklist()
+            checklistVM.saveChecklist()
         }
-
-        return Color(hex: "4a90e2")
+        print("✅ Reset complete for all \(viewModel.aircraft.count) aircraft")
     }
 }

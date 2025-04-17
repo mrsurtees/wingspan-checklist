@@ -1,3 +1,4 @@
+// AboutView.swift
 import SwiftUI
 import Foundation
 
@@ -119,6 +120,9 @@ private struct EnhancedSkyBackground: View {
     @Binding var debugPhase: Double
     @State private var colorPhase: Double = 0.0
     @State private var cloudOffsets: [CGFloat] = [0, 100, 200, 50, 150]
+    @AppStorage("animationsEnabled") private var animationsEnabled = true
+    @AppStorage("useSystemTime") private var useSystemTime = true
+    @AppStorage("manualTimeOfDay") private var manualTimeOfDay: TimeOfDay = .day
     
     // Store static star positions
     private let stars: [(x: CGFloat, y: CGFloat, size: CGFloat, opacity: Double)] = (0..<25).map { _ in
@@ -357,8 +361,10 @@ private struct EnhancedSkyBackground: View {
                 .rotationEffect(.degrees(-10))
                 .offset(x: plane1X, y: geo.size.height * 0.3)
                 .onAppear {
-                    withAnimation(.linear(duration: 25).repeatForever(autoreverses: false)) {
-                        plane1X = geo.size.width + 100
+                    if animationsEnabled {
+                        withAnimation(.linear(duration: 25).repeatForever(autoreverses: false)) {
+                            plane1X = geo.size.width + 100
+                        }
                     }
                 }
             
@@ -372,8 +378,10 @@ private struct EnhancedSkyBackground: View {
                 .rotationEffect(.degrees(170))
                 .offset(x: plane2X, y: geo.size.height * 0.2)
                 .onAppear {
-                    withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
-                        plane2X = -50
+                    if animationsEnabled {
+                        withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
+                            plane2X = -50
+                        }
                     }
                 }
             
@@ -403,8 +411,10 @@ private struct EnhancedSkyBackground: View {
             .rotationEffect(.degrees(-5))
             .offset(x: plane3X, y: geo.size.height * 0.15)
             .onAppear {
-                withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-                    plane3X = geo.size.width + 200
+                if animationsEnabled {
+                    withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
+                        plane3X = geo.size.width + 200
+                    }
                 }
             }
         }
@@ -461,22 +471,27 @@ private struct EnhancedSkyBackground: View {
     // MARK: - Helper Methods
     
     private func initializeTimeBasedAppearance() {
-        let calendar = Calendar.current
-        let now = Date()
-        let hour = Double(calendar.component(.hour, from: now))
-        let minute = Double(calendar.component(.minute, from: now))
-        let totalHours = hour + (minute / 60.0)
-        let normalizedHours = (totalHours - 6).truncatingRemainder(dividingBy: 24)
-        colorPhase = (normalizedHours / 12.0) * 2.0
-        print("Time: \(totalHours), Normalized: \(normalizedHours), ColorPhase: \(colorPhase)")
+        if useSystemTime {
+            let calendar = Calendar.current
+            let now = Date()
+            let hour = Double(calendar.component(.hour, from: now))
+            let minute = Double(calendar.component(.minute, from: now))
+            let totalHours = hour + (minute / 60.0)
+            let normalizedHours = (totalHours - 6).truncatingRemainder(dividingBy: 24)
+            colorPhase = (normalizedHours / 12.0) * 2.0
+        } else {
+            colorPhase = manualTimeOfDay.colorPhase
+        }
+        
         debugPhase = colorPhase
     }
     
     private func startCloudAnimation() {
-        // Animate clouds slowly moving across sky
-        withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
-            for i in 0..<cloudOffsets.count {
-                cloudOffsets[i] += UIScreen.main.bounds.width + 200
+        if animationsEnabled {
+            withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
+                for i in 0..<cloudOffsets.count {
+                    cloudOffsets[i] += UIScreen.main.bounds.width + 200
+                }
             }
         }
     }
