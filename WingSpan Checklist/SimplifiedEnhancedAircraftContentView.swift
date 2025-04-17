@@ -98,7 +98,6 @@ struct SimplifiedEnhancedAircraftContentView: View {
         }
         .navigationTitle(aircraft.modelName)
         .navigationBarTitleDisplayMode(.inline)
-
         .alert(isPresented: $showResetAlert) {
             Alert(
                 title: Text("Reset Checklist"),
@@ -337,4 +336,3 @@ struct SimplifiedItemView: View {
         }
     }
 }
- 

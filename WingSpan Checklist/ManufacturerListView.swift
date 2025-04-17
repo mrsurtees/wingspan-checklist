@@ -59,11 +59,23 @@ struct ManufacturerListView: View {
     }
 
     private var header: some View {
-        Text("Manufacturers")
-            .font(.system(size: 32, weight: .bold, design: .rounded))
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
+        HStack {
+            Text("Manufacturers")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            NavigationLink(destination: AboutView()) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Circle().fill(Color(hex: "2c4a80")))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
     }
 
     private func loadLastViewedAircraft() -> WingSpanAircraft? {
@@ -294,4 +306,3 @@ struct StatusCircle: View {
         return Color(hex: "4a90e2")
     }
 }
- 
